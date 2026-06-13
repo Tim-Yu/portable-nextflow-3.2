@@ -41,7 +41,41 @@ chmod +x "$TARGET_DIR/bin/nextflow" "$TARGET_DIR/run_nextflow.sh"
 # Force local cache path for predictable controlled-env behavior.
 export NXF_HOME="${NXF_HOME:-$TARGET_DIR/.nextflow}"
 
-if command -v java >/dev/null 2>&1; then
+ensure_module_cmd() {
+  if type module >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -f /etc/profile.d/modules.sh ]]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/modules.sh
+  elif [[ -f /usr/share/Modules/init/bash ]]; then
+    # shellcheck disable=SC1091
+    source /usr/share/Modules/init/bash
+  fi
+
+  type module >/dev/null 2>&1
+}
+
+load_java_if_missing() {
+  if command -v java >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if ! ensure_module_cmd; then
+    return 1
+  fi
+
+  for java_mod in java/21.0.2 java/17.0.2 java/23.0.1 java/19.0.2 java/11.0.2 java/1.8; do
+    if module load "$java_mod" >/dev/null 2>&1; then
+      break
+    fi
+  done
+
+  command -v java >/dev/null 2>&1
+}
+
+if load_java_if_missing; then
   echo
   "$TARGET_DIR/run_nextflow.sh" -version
 else
@@ -49,7 +83,7 @@ else
   echo "[WARN] Java is not available in the current shell (java: command not found)."
   echo "[WARN] Restore completed, but version check was skipped."
   echo "[INFO] Load a module that provides Java before running Nextflow."
-  echo "[INFO] Example: module load nextflow/24.04.2-with-plugins"
+  echo "[INFO] Example: module load java/21.0.2"
 fi
 
 echo
