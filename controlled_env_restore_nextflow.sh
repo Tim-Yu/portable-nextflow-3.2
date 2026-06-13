@@ -39,7 +39,7 @@ fetch "$JAR_URL" "$TARGET_DIR/share/nextflow/dist/25.04.2/nextflow-25.04.2-one.j
 chmod +x "$TARGET_DIR/bin/nextflow" "$TARGET_DIR/run_nextflow.sh"
 
 # Force local cache path for predictable controlled-env behavior.
-export NXF_HOME="${NXF_HOME:-$TARGET_DIR/.nextflow}"
+export NXF_HOME="$TARGET_DIR/.nextflow"
 
 ensure_module_cmd() {
   if type module >/dev/null 2>&1; then
